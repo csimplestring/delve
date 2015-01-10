@@ -114,7 +114,7 @@ func TestBreakPoint(t *testing.T) {
 		bp, err := p.Break(sleepyaddr)
 		assertNoError(err, t, "Break()")
 
-		breakpc := bp.Addr + 1
+		breakpc := bp.Addr
 		err = p.Continue()
 		assertNoError(err, t, "Continue()")
 

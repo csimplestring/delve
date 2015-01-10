@@ -25,6 +25,7 @@ type DebuggedProcess struct {
 	Dwarf         *dwarf.Data
 	GoSymTable    *gosym.Table
 	FrameEntries  *frame.FrameDescriptionEntries
+	HWBreakPoints [4]*BreakPoint
 	BreakPoints   map[uint64]*BreakPoint
 	Threads       map[int]*ThreadContext
 	CurrentThread *ThreadContext
@@ -493,6 +494,15 @@ func handleBreakPoint(dbp *DebuggedProcess, pid int) error {
 			stopTheWorld(dbp)
 		}
 		return nil
+	}
+	// Check for hardware breakpoint
+	for _, bp := range dbp.HWBreakPoints {
+		if bp.Addr == pc {
+			if !bp.temp {
+				stopTheWorld(dbp)
+			}
+			return nil
+		}
 	}
 
 	return fmt.Errorf("did not hit recognized breakpoint")

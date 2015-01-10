@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-
 	"syscall"
 
 	"github.com/derekparker/delve/dwarf/frame"
@@ -85,13 +84,12 @@ func (thread *ThreadContext) Break(addr uint64) (*BreakPoint, error) {
 		return nil, BreakPointExistsError{f, l, addr}
 	}
 
-	_, err = writeMemory(thread.Id, uintptr(addr), int3)
+	i, err := thread.setBreakpointInProcess(thread.Id, addr)
 	if err != nil {
 		return nil, err
 	}
 
 	breakpointIDCounter++
-
 	breakpoint := &BreakPoint{
 		FunctionName: fn.Name,
 		File:         f,
@@ -101,7 +99,11 @@ func (thread *ThreadContext) Break(addr uint64) (*BreakPoint, error) {
 		ID:           breakpointIDCounter,
 	}
 
-	thread.Process.BreakPoints[addr] = breakpoint
+	if i != -1 {
+		thread.Process.HWBreakPoints[i] = breakpoint
+	} else {
+		thread.Process.BreakPoints[addr] = breakpoint
+	}
 
 	return breakpoint, nil
 }
